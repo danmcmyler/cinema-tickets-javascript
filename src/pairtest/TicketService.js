@@ -16,14 +16,30 @@ export default class TicketService {
    * Should only have private methods other than the one below.
    */
   purchaseTickets(accountId, ...ticketTypeRequests) {
+    if (!Number.isInteger(accountId) || accountId <= 0) {
+      throw new InvalidPurchaseException('Invalid accountId.');
+    }
+
+    if (!ticketTypeRequests || ticketTypeRequests.length === 0) {
+      throw new InvalidPurchaseException('No tickets requested.');
+    }
+
+    for (const req of ticketTypeRequests) {
+      if (
+        !req ||
+        typeof req.getNoOfTickets !== 'function' ||
+        !Number.isInteger(req.getNoOfTickets()) ||
+        req.getNoOfTickets() < 0
+      ) {
+        throw new InvalidPurchaseException('Invalid ticket quantity or type.');
+      }
+    }
 
     let adults = 0;
 
     for (const req of ticketTypeRequests) {
       if (
-        req &&
         typeof req.getTicketType === 'function' &&
-        typeof req.getNoOfTickets === 'function' &&
         req.getTicketType() === 'ADULT'
       ) {
         adults += req.getNoOfTickets();
