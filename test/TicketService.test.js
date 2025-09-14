@@ -6,7 +6,6 @@ import InvalidPurchaseException from "../src/pairtest/lib/InvalidPurchaseExcepti
 class FakePayment {
   makePayment = jest.fn();
 }
-
 class FakeSeats {
   reserveSeat = jest.fn();
 }
@@ -28,5 +27,29 @@ describe("TicketService", () => {
     expect(pay.makePayment).toHaveBeenCalledWith(1, 25);
     expect(seat.reserveSeat).toHaveBeenCalledTimes(1);
     expect(seat.reserveSeat).toHaveBeenCalledWith(1, 1);
+  });
+
+  test("rejects when accountId is not an integer", () => {
+    expect(() =>
+      svc.purchaseTickets(1.5, new TicketTypeRequest("ADULT", 1))
+    ).toThrow(InvalidPurchaseException);
+  });
+
+  test("rejects when accountId is not positive", () => {
+    expect(() =>
+      svc.purchaseTickets(0, new TicketTypeRequest("ADULT", 1))
+    ).toThrow(InvalidPurchaseException);
+  });
+
+  test("rejects when no ticket requests are provided", () => {
+    expect(() => svc.purchaseTickets(1)).toThrow(InvalidPurchaseException);
+  });
+
+  test("rejects when ticket quantity is negative", () => {
+    const bad = {
+      getTicketType: () => "ADULT",
+      getNoOfTickets: () => -1,
+    };
+    expect(() => svc.purchaseTickets(1, bad)).toThrow(InvalidPurchaseException);
   });
 });
