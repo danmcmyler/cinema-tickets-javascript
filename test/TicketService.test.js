@@ -52,4 +52,56 @@ describe("TicketService", () => {
     };
     expect(() => svc.purchaseTickets(1, bad)).toThrow(InvalidPurchaseException);
   });
+
+  test("rejects when more than 25 tickets are requested", () => {
+    const tooMany = new TicketTypeRequest("ADULT", 26);
+    expect(() => svc.purchaseTickets(1, tooMany)).toThrow(InvalidPurchaseException);
+  });
+
+  test("rejects when child tickets are purchased without an adult", () => {
+    const childOnly = new TicketTypeRequest("CHILD", 1);
+    expect(() => svc.purchaseTickets(1, childOnly)).toThrow(InvalidPurchaseException);
+  });
+
+  test("rejects when infant tickets are purchased without an adult", () => {
+    const infantOnly = new TicketTypeRequest("INFANT", 1);
+    expect(() => svc.purchaseTickets(1, infantOnly)).toThrow(InvalidPurchaseException);
+  });
+
+  test("processes a mix of adults and children correctly", () => {
+    const result = svc.purchaseTickets(
+      1,
+      new TicketTypeRequest("ADULT", 1),
+      new TicketTypeRequest("CHILD", 2)
+    );
+
+    expect(result).toEqual({ accountId: 1, totalToPay: 55, seatsToReserve: 3 });
+    expect(pay.makePayment).toHaveBeenCalledWith(1, 55);
+    expect(seat.reserveSeat).toHaveBeenCalledWith(1, 3);
+  });
+
+  test("processes a mix of adults and infants correctly", () => {
+    const result = svc.purchaseTickets(
+      1,
+      new TicketTypeRequest("ADULT", 1),
+      new TicketTypeRequest("INFANT", 2)
+    );
+
+    expect(result).toEqual({ accountId: 1, totalToPay: 25, seatsToReserve: 1 });
+    expect(pay.makePayment).toHaveBeenCalledWith(1, 25);
+    expect(seat.reserveSeat).toHaveBeenCalledWith(1, 1);
+  });
+
+  test("processes a mix of adults, children and infants", () => {
+    const result = svc.purchaseTickets(
+      1,
+      new TicketTypeRequest("ADULT", 2),
+      new TicketTypeRequest("CHILD", 3),
+      new TicketTypeRequest("INFANT", 1)
+    );
+
+    expect(result).toEqual({ accountId: 1, totalToPay: 95, seatsToReserve: 5 });
+    expect(pay.makePayment).toHaveBeenCalledWith(1, 95);
+    expect(seat.reserveSeat).toHaveBeenCalledWith(1, 5);
+  });
 });
