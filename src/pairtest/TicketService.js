@@ -36,18 +36,29 @@ export default class TicketService {
     }
 
     let adults = 0;
+    let children = 0;
+    let infants = 0;
 
     for (const req of ticketTypeRequests) {
-      if (
-        typeof req.getTicketType === 'function' &&
-        req.getTicketType() === 'ADULT'
-      ) {
-        adults += req.getNoOfTickets();
-      }
+      const type = typeof req.getTicketType === 'function' ? req.getTicketType() : undefined;
+      const qty = req.getNoOfTickets();
+
+      if (type === 'ADULT') adults += qty;
+      else if (type === 'CHILD') children += qty;
+      else if (type === 'INFANT') infants += qty;
     }
 
-    const totalToPay = adults * 25;
-    const seatsToReserve = adults;
+    const totalRequested = adults + children + infants;
+    if (totalRequested > 25) {
+      throw new InvalidPurchaseException('Cannot purchase more than 25 tickets.');
+    }
+
+    if ((children > 0 || infants > 0) && adults === 0) {
+      throw new InvalidPurchaseException('Child and Infant tickets require at least one Adult.');
+    }
+
+    const totalToPay = adults * 25 + children * 15; // Infants are free.
+    const seatsToReserve = adults + children;       // Infants do not get seats.
 
     this._paymentService.makePayment(accountId, totalToPay);
     this._seatService.reserveSeat(accountId, seatsToReserve);
