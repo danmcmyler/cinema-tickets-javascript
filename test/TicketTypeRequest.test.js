@@ -5,14 +5,13 @@ describe("TicketTypeRequest", () => {
   test("constructs with valid type and integer quantity", () => {
     const r = new TicketTypeRequest("ADULT", 2);
     const type = typeof r.getTicketType === "function" ? r.getTicketType() : r.ticketType || r.type;
-    const qty = 
-    typeof r.getNoOfTickets === "function" ? r.getNoOfTickets() : r.noOfTickets || r.quantity;
+    const qty = typeof r.getNoOfTickets === "function" ? r.getNoOfTickets() : r.noOfTickets || r.quantity;
 
     expect(type).toBe("ADULT");
     expect(qty).toBe(2);
   });
 
-  test("rejects invalidtype", () => {
+  test("rejects invalid type", () => {
     expect(() => new TicketTypeRequest("SENIOR", 1)).toThrow(TypeError);
   });
 

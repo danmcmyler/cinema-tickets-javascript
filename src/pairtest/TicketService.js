@@ -1,5 +1,3 @@
-import TicketTypeRequest from './lib/TicketTypeRequest.js';
-import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
 import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
 import { calculateTotal } from './domain/pricing.js';
@@ -15,9 +13,6 @@ export default class TicketService {
     this._seatService = seatService;
   }
 
-  /**
-   * Should only have private methods other than the one below.
-   */
   purchaseTickets(accountId, ...ticketTypeRequests) {
     const { adults, children, infants } = validateRequest(
       accountId,
