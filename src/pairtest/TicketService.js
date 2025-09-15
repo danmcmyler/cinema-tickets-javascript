@@ -2,9 +2,9 @@ import TicketTypeRequest from './lib/TicketTypeRequest.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
 import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
-import { MAX_TICKETS } from './domain/constants.js';
 import { calculateTotal } from './domain/pricing.js';
 import { calculateSeats } from './domain/seating.js';
+import { validateRequest } from './domain/validation.js';
 
 export default class TicketService {
   constructor(
@@ -19,46 +19,10 @@ export default class TicketService {
    * Should only have private methods other than the one below.
    */
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    if (!Number.isInteger(accountId) || accountId <= 0) {
-      throw new InvalidPurchaseException('Invalid accountId.');
-    }
-
-    if (!ticketTypeRequests || ticketTypeRequests.length === 0) {
-      throw new InvalidPurchaseException('No tickets requested.');
-    }
-
-    for (const req of ticketTypeRequests) {
-      if (
-        !req ||
-        typeof req.getNoOfTickets !== 'function' ||
-        !Number.isInteger(req.getNoOfTickets()) ||
-        req.getNoOfTickets() < 0
-      ) {
-        throw new InvalidPurchaseException('Invalid ticket quantity or type.');
-      }
-    }
-
-    let adults = 0;
-    let children = 0;
-    let infants = 0;
-
-    for (const req of ticketTypeRequests) {
-      const type = typeof req.getTicketType === 'function' ? req.getTicketType() : undefined;
-      const qty = req.getNoOfTickets();
-
-      if (type === 'ADULT') adults += qty;
-      else if (type === 'CHILD') children += qty;
-      else if (type === 'INFANT') infants += qty;
-    }
-
-    const totalRequested = adults + children + infants;
-    if (totalRequested > MAX_TICKETS) {
-      throw new InvalidPurchaseException('Cannot purchase more than 25 tickets.');
-    }
-
-    if ((children > 0 || infants > 0) && adults === 0) {
-      throw new InvalidPurchaseException('Child and Infant tickets require at least one Adult.');
-    }
+    const { adults, children, infants } = validateRequest(
+      accountId,
+      ticketTypeRequests
+    );
 
     const totalToPay = calculateTotal(adults, children, infants);
     const seatsToReserve = calculateSeats(adults, children, infants);
