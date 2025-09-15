@@ -2,6 +2,9 @@ import TicketTypeRequest from './lib/TicketTypeRequest.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
 import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
+import { MAX_TICKETS } from './domain/constants.js';
+import { calculateTotal } from './domain/pricing.js';
+import { calculateSeats } from './domain/seating.js';
 
 export default class TicketService {
   constructor(
@@ -49,7 +52,7 @@ export default class TicketService {
     }
 
     const totalRequested = adults + children + infants;
-    if (totalRequested > 25) {
+    if (totalRequested > MAX_TICKETS) {
       throw new InvalidPurchaseException('Cannot purchase more than 25 tickets.');
     }
 
@@ -57,8 +60,8 @@ export default class TicketService {
       throw new InvalidPurchaseException('Child and Infant tickets require at least one Adult.');
     }
 
-    const totalToPay = adults * 25 + children * 15; // Infants are free.
-    const seatsToReserve = adults + children;       // Infants do not get seats.
+    const totalToPay = calculateTotal(adults, children, infants);
+    const seatsToReserve = calculateSeats(adults, children, infants);
 
     this._paymentService.makePayment(accountId, totalToPay);
     this._seatService.reserveSeat(accountId, seatsToReserve);
