@@ -45,4 +45,26 @@ describe("validateRequest", () => {
     ]);
     expect(result).toEqual({ adults: 2, children: 3, infants: 1 });
   });
+
+  test("allows exactly 25 tickets in total", () => {
+    const result = validateRequest(1, [
+      new TicketTypeRequest("ADULT", 10),
+      new TicketTypeRequest("CHILD", 15),
+    ]);
+    expect(result).toEqual({ adults: 10, children: 15, infants: 0 });
+  });
+
+  test("allows children or infants when at least one adult is present", () => {
+    const result = validateRequest(1, [
+      new TicketTypeRequest("ADULT", 1),
+      new TicketTypeRequest("INFANT", 2),
+    ]);
+    expect(result).toEqual({ adults: 1, children: 0, infants: 2 });
+  });
+
+  test("does not count a request when ticket type is missing", () => {
+    const bad = { getNoOfTickets: () => 1 };
+    const result = validateRequest(1, [bad]);
+    expect(result).toEqual({ adults: 0, children: 0, infants: 0 });
+  });
 });
